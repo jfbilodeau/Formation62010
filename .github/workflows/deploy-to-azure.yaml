@@ -44,6 +44,7 @@ jobs:
     #     publish-profile: ${{ secrets.AZURE_APP_SERVICE_PUBLISH_PROFILE }} # Store your publish profile as a secret in your repository
 
     - name: Azure login
-      uses: Azure/login@v1.6.1
+      uses: Azure/login@v2.1.0
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
