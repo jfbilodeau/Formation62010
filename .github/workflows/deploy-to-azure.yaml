@@ -1,0 +1,43 @@
+# This is an example GitHub Actions workflow for building and deploying an ASP.NET application to an Azure App Service Web App.
+
+name: ASP.NET Build and Deploy
+
+# Trigger the workflow on pushes to the main branch.
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code from the repository.
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up .NET Core environment.
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.x' # Adjust to the desired .NET version
+
+    # Step 3: Restore NuGet packages.
+    - name: Restore NuGet packages
+      run: dotnet restore
+
+    # Step 4: Build the project.
+    - name: Build
+      run: dotnet build --configuration Release
+
+    # Step 5: Publish the application.
+    - name: Publish
+      run: dotnet publish --configuration Release --output ./publish
+
+    # Step 6: Deploy to Azure App Service.
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: your-app-service-name # Replace with your Azure App Service name
+        publish-profile: ${{ secrets.AZURE_APP_SERVICE_PUBLISH_PROFILE }} # Store your publish profile as a secret in your repository
