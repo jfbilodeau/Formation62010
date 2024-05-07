@@ -4,6 +4,7 @@ name: ASP.NET Build and Deploy
 
 # Trigger the workflow on pushes to the main branch.
 on:
+  workflow_dispatch: 
   push:
     branches:
       - master
