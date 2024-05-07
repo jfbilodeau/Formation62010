@@ -6,7 +6,7 @@ name: ASP.NET Build and Deploy
 on:
   push:
     branches:
-      - main=
+      - main
 
 jobs:
   build:
