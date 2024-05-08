@@ -1,6 +1,6 @@
 param name string
 
-var location = resourceGroup().location
+var location = 'CanadaEast'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: name
