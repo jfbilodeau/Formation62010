@@ -47,6 +47,33 @@ jobs:
       uses: Azure/login@v2.1.0
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy Azure Resource Manager (ARM) Template
+      uses: Azure/arm-deploy@v2
+      with:
+        # Provide the scope of the deployment. Valid values are: 'resourcegroup', 'tenant', 'managementgroup', 'subscription'
+        scope: resourcegroup
+        # Override the Subscription Id set by Azure Login.
+        #subscriptionId: # optional
+        # Specify the Id for the Management Group, only required for Management Group Deployments.
+        #managementGroupId: # optional
+        # Provide the target region, only required for tenant, management Group or Subscription deployments.
+        #region: # optional
+        # Provide the name of a resource group, only required for resource Group deployments.
+        resourceGroupName: Demo62010-Prod
+        # Specify the path or URL to the Azure Resource Manager template.
+        template: ./deploy/prod/template.bicep
+        # Incremental (only add resources to resource group) or Complete (remove extra resources from resource group) or Validate (only validates the template).
+        deploymentMode: incremental
+        # Specifies the name of the resource group deployment to create.
+        deploymentName: WebApp Demo Deploy
+        # Supply deployment parameter values.
+        parameters: ./deploy/prod/parameters-jf-prod.json
+        # Specify whether to fail the action if some data is written to stderr stream of az cli. Valid values are: true, false
+        #failOnStdErr: # optional, default is true
+        # Specify any additional arguments for the deployment.
+        # additionalArguments: # optional
+              
         
     - name: Azure WebApp
       uses: Azure/webapps-deploy@v3.0.1
