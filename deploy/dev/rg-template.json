@@ -1,0 +1,732 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sites_demo62010_dev_name": {
+            "defaultValue": "demo62010-dev",
+            "type": "String"
+        },
+        "serverfarms_Demo62010_Dev_ASP_name": {
+            "defaultValue": "Demo62010-Dev-ASP",
+            "type": "String"
+        },
+        "storageAccounts_demo62010dev_name": {
+            "defaultValue": "demo62010dev",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2023-04-01",
+            "name": "[parameters('storageAccounts_demo62010dev_name')]",
+            "location": "canadaeast",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "dnsEndpointType": "Standard",
+                "defaultToOAuthAuthentication": false,
+                "publicNetworkAccess": "Enabled",
+                "allowCrossTenantReplication": false,
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": true,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "requireInfrastructureEncryption": false,
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2023-01-01",
+            "name": "[parameters('serverfarms_Demo62010_Dev_ASP_name')]",
+            "location": "Canada East",
+            "sku": {
+                "name": "S1",
+                "tier": "Standard",
+                "size": "S1",
+                "family": "S",
+                "capacity": 1
+            },
+            "kind": "linux",
+            "properties": {
+                "perSiteScaling": false,
+                "elasticScaleEnabled": false,
+                "maximumElasticWorkerCount": 1,
+                "isSpot": false,
+                "freeOfferExpirationTime": "2024-06-06T17:48:00",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0,
+                "zoneRedundant": false
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2023-04-01",
+            "name": "[concat(parameters('storageAccounts_demo62010dev_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_demo62010dev_name'))]"
+            ],
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "containerDeleteRetentionPolicy": {
+                    "enabled": true,
+                    "days": 7
+                },
+                "cors": {
+                    "corsRules": []
+                },
+                "deleteRetentionPolicy": {
+                    "allowPermanentDelete": false,
+                    "enabled": true,
+                    "days": 7
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices",
+            "apiVersion": "2023-04-01",
+            "name": "[concat(parameters('storageAccounts_demo62010dev_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_demo62010dev_name'))]"
+            ],
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "protocolSettings": {
+                    "smb": {}
+                },
+                "cors": {
+                    "corsRules": []
+                },
+                "shareDeleteRetentionPolicy": {
+                    "enabled": true,
+                    "days": 7
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/queueServices",
+            "apiVersion": "2023-04-01",
+            "name": "[concat(parameters('storageAccounts_demo62010dev_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_demo62010dev_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices",
+            "apiVersion": "2023-04-01",
+            "name": "[concat(parameters('storageAccounts_demo62010dev_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_demo62010dev_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2023-01-01",
+            "name": "[parameters('sites_demo62010_dev_name')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_Demo62010_Dev_ASP_name'))]"
+            ],
+            "kind": "app,linux",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(parameters('sites_demo62010_dev_name'), '.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(parameters('sites_demo62010_dev_name'), '.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_Demo62010_Dev_ASP_name'))]",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "vnetRouteAllEnabled": false,
+                "vnetImagePullEnabled": false,
+                "vnetContentShareEnabled": false,
+                "siteConfig": {
+                    "numberOfWorkers": 1,
+                    "linuxFxVersion": "DOTNETCORE|8.0",
+                    "acrUseManagedIdentityCreds": false,
+                    "alwaysOn": false,
+                    "http20Enabled": false,
+                    "functionAppScaleLimit": 0,
+                    "minimumElasticInstanceCount": 1
+                },
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "clientCertMode": "Required",
+                "hostNamesDisabled": false,
+                "customDomainVerificationId": "8C28EE57703A4FE63D5969BAFE5F0EBEA0BA19E76422D978981B6BA1E5EDC60E",
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": true,
+                "redundancyMode": "None",
+                "publicNetworkAccess": "Enabled",
+                "storageAccountRequired": false,
+                "keyVaultReferenceIdentity": "SystemAssigned"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/ftp')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "allow": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/scm')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "allow": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/web')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "numberOfWorkers": 1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ],
+                "netFrameworkVersion": "v4.0",
+                "linuxFxVersion": "DOTNETCORE|8.0",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "remoteDebuggingVersion": "VS2019",
+                "httpLoggingEnabled": false,
+                "acrUseManagedIdentityCreds": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "$demo62010-dev",
+                "scmType": "None",
+                "use32BitWorkerProcess": true,
+                "webSocketsEnabled": false,
+                "alwaysOn": false,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": false
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "vnetRouteAllEnabled": false,
+                "vnetPrivatePortsCount": 0,
+                "publicNetworkAccess": "Enabled",
+                "localMySqlEnabled": false,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 2147483647,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 2147483647,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "scmMinTlsVersion": "1.2",
+                "ftpsState": "FtpsOnly",
+                "preWarmedInstanceCount": 0,
+                "elasticWebAppScaleLimit": 0,
+                "functionsRuntimeScaleMonitoringEnabled": false,
+                "minimumElasticInstanceCount": 1,
+                "azureStorageAccounts": {}
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/deployments",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/14a664e8-7c82-4bf3-ad04-7d84824a2401')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "status": 4,
+                "author_email": "N/A",
+                "author": "N/A",
+                "deployer": "OneDeploy",
+                "message": "OneDeploy",
+                "start_time": "2024-05-08T13:36:33.0540467Z",
+                "end_time": "2024-05-08T13:36:40.8322791Z",
+                "active": false
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/deployments",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/40693377-d6b5-4d30-b195-3d2550eb3701')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "status": 4,
+                "author_email": "N/A",
+                "author": "N/A",
+                "deployer": "OneDeploy",
+                "message": "OneDeploy",
+                "start_time": "2024-05-08T13:44:25.1609775Z",
+                "end_time": "2024-05-08T13:44:30.7267289Z",
+                "active": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/hostNameBindings",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/', parameters('sites_demo62010_dev_name'), '.azurewebsites.net')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "siteName": "demo62010-dev",
+                "hostNameType": "Verified"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-07T18_38_53_2854281')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-07T19_38_53_3662746')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-07T20_38_53_4093196')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-07T21_38_53_4152705')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-07T22_38_53_4523143')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-07T23_38_53_5011477')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T00_38_53_5419684')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T01_38_53_5557441')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T02_38_53_6357991')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T03_38_53_6592828')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T04_38_53_6603090')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T05_38_53_6774275')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T06_38_53_7291447')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T07_38_53_8074843')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T08_38_53_8426170')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T09_38_53_8462103')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T10_38_53_8865140')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T11_38_53_9667901')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T12_38_53_9763862')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T13_38_54_0229112')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/2024-05-08T14_38_54_0937683')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/slots",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/v2')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]",
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_Demo62010_Dev_ASP_name'))]"
+            ],
+            "kind": "app,linux",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "demo62010-dev-v2.azurewebsites.net",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "demo62010-dev-v2.scm.azurewebsites.net",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_Demo62010_Dev_ASP_name'))]",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "vnetRouteAllEnabled": false,
+                "vnetImagePullEnabled": false,
+                "vnetContentShareEnabled": false,
+                "siteConfig": {
+                    "numberOfWorkers": 1,
+                    "linuxFxVersion": "DOTNETCORE|8.0",
+                    "acrUseManagedIdentityCreds": false,
+                    "alwaysOn": false,
+                    "http20Enabled": false,
+                    "functionAppScaleLimit": 0,
+                    "minimumElasticInstanceCount": 1
+                },
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "clientCertMode": "Required",
+                "hostNamesDisabled": false,
+                "customDomainVerificationId": "8C28EE57703A4FE63D5969BAFE5F0EBEA0BA19E76422D978981B6BA1E5EDC60E",
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": true,
+                "redundancyMode": "None",
+                "publicNetworkAccess": "Enabled",
+                "storageAccountRequired": false,
+                "keyVaultReferenceIdentity": "SystemAssigned"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/v2/ftp')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/slots', parameters('sites_demo62010_dev_name'), 'v2')]",
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "allow": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/slots/basicPublishingCredentialsPolicies",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/v2/scm')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/slots', parameters('sites_demo62010_dev_name'), 'v2')]",
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "allow": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/slots/config",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/v2/web')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/slots', parameters('sites_demo62010_dev_name'), 'v2')]",
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "numberOfWorkers": 1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ],
+                "netFrameworkVersion": "v4.0",
+                "linuxFxVersion": "DOTNETCORE|8.0",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "remoteDebuggingVersion": "VS2019",
+                "httpLoggingEnabled": false,
+                "acrUseManagedIdentityCreds": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "$demo62010-dev__v2",
+                "scmType": "None",
+                "use32BitWorkerProcess": true,
+                "webSocketsEnabled": false,
+                "alwaysOn": false,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": false
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "vnetRouteAllEnabled": false,
+                "vnetPrivatePortsCount": 0,
+                "publicNetworkAccess": "Enabled",
+                "localMySqlEnabled": false,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 2147483647,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 2147483647,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "scmMinTlsVersion": "1.2",
+                "ftpsState": "FtpsOnly",
+                "preWarmedInstanceCount": 0,
+                "elasticWebAppScaleLimit": 0,
+                "functionsRuntimeScaleMonitoringEnabled": false,
+                "minimumElasticInstanceCount": 1,
+                "azureStorageAccounts": {}
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/slots/hostNameBindings",
+            "apiVersion": "2023-01-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/v2/', parameters('sites_demo62010_dev_name'), '-v2.azurewebsites.net')]",
+            "location": "Canada East",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/slots', parameters('sites_demo62010_dev_name'), 'v2')]",
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ],
+            "properties": {
+                "siteName": "demo62010-dev(v2)",
+                "hostNameType": "Verified"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/slots/snapshots",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('sites_demo62010_dev_name'), '/v2/2024-05-08T14_38_54_0937683')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/slots', parameters('sites_demo62010_dev_name'), 'v2')]",
+                "[resourceId('Microsoft.Web/sites', parameters('sites_demo62010_dev_name'))]"
+            ]
+        }
+    ]
+}
